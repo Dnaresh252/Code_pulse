@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "724092263477",
+    "project_id": "codepulse-57666",
+    "storage_bucket": "codepulse-57666.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:724092263477:android:f56c13dcc37f09d029e57c",
+        "android_client_info": {
+          "package_name": "com.example.code_assistant"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDU8-si5z-laoZ_b27YeE2mE_hd7JpApWk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
