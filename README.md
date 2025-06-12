@@ -36,11 +36,7 @@ CodePulse is a mobile app designed for coding enthusiasts who want to:
 - Mobile-friendly interface
 - Easy navigation
 
- 📱 Screenshots
-
-| Login | Profile | Stats |
-|-------|---------|-------|
-| ![Login](https://via.placeholder.com/200x400/0D1B2A/00D4AA?text=Login) | ![Profile](https://via.placeholder.com/200x400/0D1B2A/00D4AA?text=Profile) | ![Stats](https://via.placeholder.com/200x400/0D1B2A/00D4AA?text=Stats) |
+ 
 
 🛠️ Built With
 
