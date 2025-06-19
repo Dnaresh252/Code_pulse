@@ -1136,9 +1136,15 @@ class _SearchPageState extends State<SearchPage>
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => VideoPage(topic: _query),
+                builder: (context) => VideoPage(topic: _query),
               ),
             );
+            // Navigator.push(
+            //   context,
+            //   MaterialPageRoute(
+            //     builder: (_) => VideoPage(topic: _query),
+            //   ),
+            // );
           },
           borderRadius: BorderRadius.circular(16),
           child: Center(

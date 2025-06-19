@@ -552,9 +552,12 @@ class _DarkLoginScreenState extends State<DarkLoginScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            _buildStatItem("10K+", "Students", Icons.people),
-                            _buildStatItem("500+", "Courses", Icons.book),
-                            _buildStatItem("95%", "Success", Icons.trending_up),
+                            _buildStatItem("AI-Powered", "Assistant", Icons.auto_awesome),
+                            _buildStatItem("Instant", "Solutions", Icons.flash_on),
+                            _buildStatItem("100%", "Free", Icons.star),
+                            // _buildStatItem("10K+", "Students", Icons.people),
+                            // _buildStatItem("500+", "Courses", Icons.book),
+                            // _buildStatItem("95%", "Success", Icons.trending_up),
                           ],
                         ),
                       ],

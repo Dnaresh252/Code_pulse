@@ -43,7 +43,7 @@ For now, I'll try to provide a general response based on your query.
           'temperature': 0.7,
           'topK': 40,
           'topP': 0.95,
-          'maxOutputTokens': 1024,
+          'maxOutputTokens': 4096,
         }
       };
 
@@ -120,7 +120,7 @@ Format your response using markdown with the following sections:
           'temperature': 0.2,
           'topK': 40,
           'topP': 0.95,
-          'maxOutputTokens': 1024,
+          'maxOutputTokens': 4096,
         }
       };
 
@@ -198,7 +198,7 @@ Format your response using markdown with the following sections:
           'temperature': 0.2,
           'topK': 40,
           'topP': 0.95,
-          'maxOutputTokens': 1024,
+          'maxOutputTokens': 4096,
         }
       };
 
@@ -281,7 +281,7 @@ Format your response using markdown with the following sections:
           'temperature': 0.3,
           'topK': 40,
           'topP': 0.95,
-          'maxOutputTokens': 1024,
+          'maxOutputTokens': 4096,
         }
       };
 
@@ -374,7 +374,7 @@ Make this challenge engaging and educational for someone learning ${language}.
           'temperature': 0.8,
           'topK': 40,
           'topP': 0.95,
-          'maxOutputTokens': 1536,
+          'maxOutputTokens': 4096,
         }
       };
 
@@ -484,7 +484,7 @@ Be constructive, encouraging, and educational in your feedback.
           'temperature': 0.3,
           'topK': 40,
           'topP': 0.95,
-          'maxOutputTokens': 2048,
+          'maxOutputTokens': 4096
         }
       };
 

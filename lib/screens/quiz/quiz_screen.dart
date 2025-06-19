@@ -15,7 +15,7 @@ class _QuizScreenState extends State<QuizScreen>
   String? selectedLanguage;
   String? selectedDifficulty;
 
-  final List<String> languages = ['Python', 'Java', 'C++', 'JavaScript', 'Dart'];
+  final List<String> languages = ['Python', 'Java', 'C++', 'JavaScript', 'Dart','C','Go','Rust','Swift','Kotlin','Type Script','PHP'];
   final List<String> difficulties = ['Easy', 'Medium', 'Hard'];
 
   late AnimationController _pulseController;

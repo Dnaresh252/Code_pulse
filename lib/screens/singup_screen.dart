@@ -550,7 +550,7 @@ class _DarkSignUpScreenState extends State<DarkSignUpScreen> {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                                 children: [
-                                  _buildBenefitItem("Free\nCourses", Icons.school),
+                                  _buildBenefitItem("Free\nLearning", Icons.school),
                                   _buildBenefitItem("Email\nVerified", Icons.mark_email_read),
                                   _buildBenefitItem("Safe\n& Secure", Icons.security),
                                 ],
