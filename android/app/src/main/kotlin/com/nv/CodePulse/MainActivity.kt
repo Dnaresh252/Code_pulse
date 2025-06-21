@@ -1,4 +1,4 @@
-package com.example.code_assistant
+package com.nv.CodePulse
 
 import io.flutter.embedding.android.FlutterActivity
 

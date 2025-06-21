@@ -121,7 +121,7 @@ class _DebugScreenState extends State<DebugScreen>
             .toList();
       });
     } catch (e) {
-      print('Error loading debug notes: $e');
+      //print('Error loading debug notes: $e');
     }
   }
 
@@ -136,7 +136,7 @@ class _DebugScreenState extends State<DebugScreen>
       if (userId == null) return; // No user logged in
       await prefs.setStringList('${userId}_debug_notes', debugsJson);
     } catch (e) {
-      print('Error saving debug notes: $e');
+     // print('Error saving debug notes: $e');
     }
   }
 

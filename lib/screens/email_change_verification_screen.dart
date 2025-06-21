@@ -148,7 +148,7 @@ class _EmailChangeVerificationScreenState extends State<EmailChangeVerificationS
         }
       }
     } catch (e) {
-      debugPrint('Error checking email verification: $e');
+      //debugPrint('Error checking email verification: $e');
     } finally {
       if (mounted) {
         setState(() {

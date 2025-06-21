@@ -143,7 +143,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
         }
       }
     } catch (e) {
-      debugPrint('Error checking email verification: $e');
+     // debugPrint('Error checking email verification: $e');
     } finally {
       if (mounted) {
         setState(() {
@@ -224,7 +224,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen>
         );
       }
     } catch (e) {
-      debugPrint('Error signing out: $e');
+     // debugPrint('Error signing out: $e');
     }
   }
 

@@ -33,7 +33,7 @@ class _SplashScreenState extends State<SplashScreen>
   late Animation<Offset> _logoSlideAnimation;
 
   bool _isNavigating = false;
-  String _loadingMessage = "Initializing...";
+  String _loadingMessage = "Initializing app...";
   bool _isConnected = false;
   double _currentProgress = 0.0;
   Timer? _progressTimer;
@@ -67,7 +67,7 @@ class _SplashScreenState extends State<SplashScreen>
       await _startConnectivityMonitoring();
 
     } catch (e) {
-      debugPrint('❌ Splash Screen Error: $e');
+
       _handleError();
     }
   }
@@ -426,7 +426,7 @@ class _SplashScreenState extends State<SplashScreen>
             mainAxisSize: MainAxisSize.min,
             children: [
               Text(
-                'CodePulse requires an internet connection to work properly.',
+                'This app requires an internet connection to work properly.',
                 style: TextStyle(color: Colors.white70, fontSize: 14),
               ),
               SizedBox(height: 16),
@@ -934,7 +934,7 @@ class _SplashScreenState extends State<SplashScreen>
                 SizedBox(width: isTablet ? 10 : 8),
                 Flexible(
                   child: Text(
-                    '© 2025 CodePulse - Empowering Coders',
+                    '© ${DateTime.now().year} CodePulse - Learn to Code',
                     style: TextStyle(
                       color: Colors.white.withOpacity(0.6),
                       fontSize: isTablet ? 13 : 11,

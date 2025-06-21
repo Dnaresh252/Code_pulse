@@ -120,7 +120,7 @@ class _CodingHelpScreenState extends State<CodingHelpScreen>
             .toList();
       });
     } catch (e) {
-      print('Error loading notes: $e');
+     // print('Error loading notes: $e');
     }
   }
 
@@ -135,7 +135,7 @@ class _CodingHelpScreenState extends State<CodingHelpScreen>
       if (userId == null) return; // No user logged in
       await prefs.setStringList('${userId}_coding_notes', notesJson);
     } catch (e) {
-      print('Error saving notes: $e');
+     // print('Error saving notes: $e');
     }
   }
 

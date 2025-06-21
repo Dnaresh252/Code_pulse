@@ -66,13 +66,13 @@ void main() async {
 
     // Initialize Firebase
     await Firebase.initializeApp();
-    debugPrint('✅ Firebase initialized');
+
 
     // Run the app
     runApp(const CodePulseApp());
 
   } catch (e) {
-    debugPrint('❌ App initialization failed: $e');
+
     runApp(const ErrorApp());
   }
 }
@@ -92,7 +92,7 @@ class _CodePulseAppState extends State<CodePulseApp> {
     super.initState();
     // Add lifecycle observer
     WidgetsBinding.instance.addObserver(_lifecycleObserver);
-    debugPrint('🚀 CodePulse App started');
+
   }
 
   @override
@@ -254,11 +254,11 @@ extension UserSessionExtensions on BuildContext {
       final prefs = await SharedPreferences.getInstance();
       await prefs.clear();
 
-      debugPrint('✅ User signed out');
+     // debugPrint('✅ User signed out');
 
       AppLifecycleObserver.setNavigating(false);
     } catch (e) {
-      debugPrint('❌ Sign out failed: $e');
+      //++++++++++debugPrint('❌ Sign out failed: $e');
       AppLifecycleObserver.setNavigating(false);
     }
   }

@@ -1,5 +1,4 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter/gestures.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -78,11 +77,64 @@ class _DarkLoginScreenState extends State<DarkLoginScreen> {
     }
   }
 
+  // Check email verification status through Firestore
+  Future<Map<String, dynamic>> _checkEmailVerificationStatus() async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) {
+        return {'verified': false, 'error': 'No user logged in'};
+      }
+
+      // Refresh Firebase Auth verification status
+      await user.reload();
+      final User? refreshedUser = _auth.currentUser;
+
+      if (refreshedUser == null) {
+        return {'verified': false, 'error': 'User session expired'};
+      }
+
+      // Check Firestore verification status
+      final userDoc = await _firestore.collection('users').doc(refreshedUser.uid).get();
+
+      if (!userDoc.exists) {
+        return {'verified': false, 'error': 'User document not found in database'};
+      }
+
+      final userData = userDoc.data()!;
+      bool firebaseVerified = refreshedUser.emailVerified;
+      bool firestoreVerified = userData['emailVerified'] ?? false;
+
+      // Update Firestore if Firebase is verified but Firestore isn't
+      if (firebaseVerified && !firestoreVerified) {
+        await _firestore.collection('users').doc(refreshedUser.uid).update({
+          'emailVerified': true,
+          'emailVerifiedAt': FieldValue.serverTimestamp(),
+          'lastVerificationCheck': FieldValue.serverTimestamp(),
+        });
+        firestoreVerified = true;
+      }
+
+      // Update last verification check timestamp
+      await _firestore.collection('users').doc(refreshedUser.uid).update({
+        'lastVerificationCheck': FieldValue.serverTimestamp(),
+      });
+
+      return {
+        'verified': firebaseVerified && firestoreVerified,
+        'firebaseVerified': firebaseVerified,
+        'firestoreVerified': firestoreVerified,
+        'userData': userData,
+      };
+
+    } catch (e) {
+      //debugPrint('Error checking verification status: $e');
+      return {'verified': false, 'error': e.toString()};
+    }
+  }
+
   // Firebase login method
   Future<void> _login() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
-    }
+    if (!_formKey.currentState!.validate()) return;
 
     setState(() {
       _isLoading = true;
@@ -90,92 +142,351 @@ class _DarkLoginScreenState extends State<DarkLoginScreen> {
     });
 
     try {
-      // Sign in with Firebase Auth
-      UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+      // 1. Sign in with Firebase Auth
+      final UserCredential userCredential = await _auth.signInWithEmailAndPassword(
         email: _emailController.text.trim(),
         password: _passwordController.text,
       );
 
-      // Update last login timestamp in Firestore
-      if (userCredential.user != null) {
-        await _firestore.collection('users').doc(userCredential.user!.uid).update({
-          'lastLoginAt': FieldValue.serverTimestamp(),
-          'isActive': true,
-        });
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setBool('is_logged_in', true);
-        await prefs.setString('last_login', DateTime.now().toIso8601String());
-        await prefs.setString('user_uid', userCredential.user!.uid);
+      final user = userCredential.user;
+      if (user == null) throw FirebaseAuthException(code: 'user-not-found');
 
-        if (!mounted) return;
+      // 2. Check email verification status (Firebase Auth + Firestore)
+      await user.reload(); // Refresh verification status
+      final userDoc = await _firestore.collection('users').doc(user.uid).get();
 
-        // Show success message
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Row(
-              children: [
-                Icon(Icons.check_circle, color: Colors.white),
-                SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    'Welcome back! Login successful.',
-                    style: TextStyle(fontWeight: FontWeight.w500),
-                  ),
-                ),
-              ],
-            ),
-            backgroundColor: const Color(0xFF00D4AA),
-            behavior: SnackBarBehavior.floating,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            duration: const Duration(seconds: 3),
-          ),
-        );
+      // Check both Firebase Auth and Firestore verification status
+      bool isFirebaseVerified = user.emailVerified;
+      bool isFirestoreVerified = userDoc.exists ? (userDoc.data()?['emailVerified'] ?? false) : false;
 
-        // Navigate to home screen
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
+      if (!isFirebaseVerified || !isFirestoreVerified) {
+        // Update Firestore if Firebase is verified but Firestore isn't
+        if (isFirebaseVerified && !isFirestoreVerified) {
+          await _firestore.collection('users').doc(user.uid).update({
+            'emailVerified': true,
+            'emailVerifiedAt': FieldValue.serverTimestamp(),
+          });
+        } else {
+          // Still not verified
+          await _auth.signOut();
+          throw FirebaseAuthException(
+            code: 'unverified-email',
+            message: 'Please verify your email before logging in',
+          );
+        }
       }
+
+      // 3. Update last login status (transaction for safety)
+      await _firestore.runTransaction((transaction) async {
+        transaction.update(userDoc.reference, {
+          'lastLoginAt': FieldValue.serverTimestamp(),
+          'isOnline': true,
+          'isActive': true,
+          'emailVerified': true,
+        });
+      });
+
+      // 4. Save local authentication state
+      final prefs = await SharedPreferences.getInstance();
+      await Future.wait([
+        prefs.setBool('is_logged_in', true),
+        prefs.setString('last_login', DateTime.now().toIso8601String()),
+        prefs.setString('user_uid', user.uid),
+      ]);
+
+      if (!mounted) return;
+
+      // 5. Show success feedback
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.check, color: Color(0xFF00D4AA), size: 18),
+              ),
+              const SizedBox(width: 12),
+              const Expanded(
+                child: Text(
+                  'Authentication successful! Redirecting...',
+                  style: TextStyle(fontWeight: FontWeight.w500),
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: const Color(0xFF00D4AA),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+          duration: const Duration(seconds: 2),
+        ),
+      );
+
+      // 6. Navigate to home screen
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const HomeScreen()),
+            (route) => false,
+      );
+
     } on FirebaseAuthException catch (e) {
       String errorMessage;
       switch (e.code) {
         case 'user-not-found':
-          errorMessage = 'No account found with this email address.';
+          errorMessage = 'Account not found. Please sign up first.';
           break;
         case 'wrong-password':
           errorMessage = 'Incorrect password. Please try again.';
           break;
         case 'invalid-email':
-          errorMessage = 'The email address is not valid.';
+          errorMessage = 'Invalid email format.';
           break;
         case 'user-disabled':
           errorMessage = 'This account has been disabled.';
           break;
-        case 'too-many-requests':
-          errorMessage = 'Too many failed attempts. Please try again later.';
+        case 'unverified-email': // New case
+          errorMessage = 'Please verify your email first (check your inbox).';
           break;
-        case 'network-request-failed':
-          errorMessage = 'Network error. Please check your connection.';
-          break;
-        case 'invalid-credential':
-          errorMessage = 'Invalid credentials. Please check your email and password.';
+        case 'unauthorized': // New case
+          errorMessage = 'Account not yet approved. Please contact support.';
           break;
         default:
-          errorMessage = 'Login failed. Please try again.';
+          errorMessage = 'Login failed: ${e.message ?? 'Unknown error'}';
       }
-      setState(() {
-        _errorMessage = errorMessage;
-      });
+      if (mounted) setState(() => _errorMessage = errorMessage);
     } catch (e) {
-      setState(() {
-        _errorMessage = 'An unexpected error occurred. Please try again.';
-      });
-      debugPrint('Login Error: $e');
+      //debugPrint('Login error: $e');
+      if (mounted) {
+        setState(() => _errorMessage = 'An unexpected error occurred');
+      }
     } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  // Resend verification email
+  Future<void> _resendVerificationEmail() async {
+    try {
       setState(() {
-        _isLoading = false;
+        _isLoading = true;
+        _errorMessage = null;
       });
+
+      // Sign in temporarily to send verification
+      final UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      final user = userCredential.user;
+      if (user != null) {
+        // Check current verification status first
+        final verificationStatus = await _checkEmailVerificationStatus();
+
+        if (verificationStatus['verified'] == true) {
+          // Already verified, proceed with login
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.verified, color: Color(0xFF00D4AA), size: 18),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'Email already verified! Logging you in...',
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ],
+                ),
+                backgroundColor: const Color(0xFF00D4AA),
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                duration: const Duration(seconds: 2),
+              ),
+            );
+            _login();
+            return;
+          }
+        }
+
+        if (!user.emailVerified) {
+          await user.sendEmailVerification();
+          await _auth.signOut(); // Sign out again
+
+          // Update Firestore with resend attempt
+          await _firestore.collection('users').doc(user.uid).update({
+            'lastVerificationEmailSent': FieldValue.serverTimestamp(),
+            'verificationEmailAttempts': FieldValue.increment(1),
+          });
+
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.email, color: Color(0xFF00D4AA), size: 18),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'Verification email sent! Check your inbox.',
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ],
+                ),
+                backgroundColor: const Color(0xFF00D4AA),
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                duration: const Duration(seconds: 3),
+              ),
+            );
+          }
+        }
+      }
+    } on FirebaseAuthException catch (e) {
+      await _auth.signOut();
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Failed to send verification email: ${e.message}';
+        });
+      }
+    } catch (e) {
+      await _auth.signOut();
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Unexpected error occurred: ${e.toString()}';
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  // Check if email is verified
+  Future<void> _checkEmailVerified() async {
+    if (_emailController.text.trim().isEmpty || _passwordController.text.isEmpty) {
+      setState(() {
+        _errorMessage = 'Please enter your email and password first';
+      });
+      return;
+    }
+
+    try {
+      setState(() {
+        _isLoading = true;
+        _errorMessage = null;
+      });
+
+      // Sign in temporarily to check verification status
+      final UserCredential userCredential = await _auth.signInWithEmailAndPassword(
+        email: _emailController.text.trim(),
+        password: _passwordController.text,
+      );
+
+      final user = userCredential.user;
+      if (user != null) {
+        // Use the enhanced verification check
+        final verificationStatus = await _checkEmailVerificationStatus();
+
+        if (verificationStatus['verified'] == true) {
+          // Email is verified in both Firebase and Firestore
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(4),
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Icons.verified, color: Color(0xFF00D4AA), size: 18),
+                    ),
+                    const SizedBox(width: 12),
+                    const Expanded(
+                      child: Text(
+                        'Email verified! Logging you in...',
+                        style: TextStyle(fontWeight: FontWeight.w500),
+                      ),
+                    ),
+                  ],
+                ),
+                backgroundColor: const Color(0xFF00D4AA),
+                behavior: SnackBarBehavior.floating,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                duration: const Duration(seconds: 2),
+              ),
+            );
+
+            // Continue with login process
+            _login();
+            return;
+          }
+        } else {
+          // Still not verified
+          await _auth.signOut();
+          String errorMsg = 'Email is still not verified. ';
+
+          // Provide specific feedback based on verification status
+          if (verificationStatus['firebaseVerified'] == true && verificationStatus['firestoreVerified'] == false) {
+            errorMsg += 'Database sync in progress. Please try again.';
+          } else if (verificationStatus['error'] != null) {
+            errorMsg += 'Error: ${verificationStatus['error']}';
+          } else {
+            errorMsg += 'Please check your inbox or resend verification.';
+          }
+
+          if (mounted) {
+            setState(() {
+              _errorMessage = errorMsg;
+            });
+          }
+        }
+      }
+    } on FirebaseAuthException catch (e) {
+      await _auth.signOut();
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Error checking verification: ${e.message}';
+        });
+      }
+    } catch (e) {
+      await _auth.signOut();
+      if (mounted) {
+        setState(() {
+          _errorMessage = 'Unexpected error: ${e.toString()}';
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
     }
   }
 
@@ -251,7 +562,7 @@ class _DarkLoginScreenState extends State<DarkLoginScreen> {
                             colors: [Color(0xFF00D4AA), Color(0xFF00A8CC)],
                           ).createShader(bounds),
                           child: Text(
-                            "Welcome Back, Coder! 🚀",
+                            "Welcome Back, Coder!",
                             style: TextStyle(
                               fontSize: screenWidth * 0.065,
                               fontWeight: FontWeight.bold,
@@ -307,7 +618,7 @@ class _DarkLoginScreenState extends State<DarkLoginScreen> {
 
                   SizedBox(height: screenHeight * 0.03),
 
-                  // Error message display
+                  // Error message display with verification buttons
                   if (_errorMessage != null)
                     Container(
                       margin: const EdgeInsets.only(bottom: 16),
@@ -317,20 +628,71 @@ class _DarkLoginScreenState extends State<DarkLoginScreen> {
                         borderRadius: BorderRadius.circular(12),
                         border: Border.all(color: Colors.red.withOpacity(0.3)),
                       ),
-                      child: Row(
+                      child: Column(
                         children: [
-                          const Icon(Icons.error_outline, color: Colors.red, size: 20),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              _errorMessage!,
-                              style: const TextStyle(
-                                color: Colors.red,
-                                fontSize: 14,
-                                fontWeight: FontWeight.w500,
+                          Row(
+                            children: [
+                              const Icon(Icons.error_outline, color: Colors.red, size: 20),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  _errorMessage!,
+                                  style: const TextStyle(
+                                    color: Colors.red,
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
                               ),
-                            ),
+                            ],
                           ),
+
+                          // Show verification buttons if email not verified
+                          if (_errorMessage!.contains('verify your email') ||
+                              _errorMessage!.contains('not verified')) ...[
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: ElevatedButton.icon(
+                                    onPressed: _isLoading ? null : _resendVerificationEmail,
+                                    icon: const Icon(Icons.email, size: 16),
+                                    label: const Text(
+                                      'Resend Email',
+                                      style: TextStyle(fontSize: 12),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF00D4AA),
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(vertical: 8),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: ElevatedButton.icon(
+                                    onPressed: _isLoading ? null : _checkEmailVerified,
+                                    icon: const Icon(Icons.refresh, size: 16),
+                                    label: const Text(
+                                      'Check Status',
+                                      style: TextStyle(fontSize: 12),
+                                    ),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.blue,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(vertical: 8),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius: BorderRadius.circular(8),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -384,7 +746,7 @@ class _DarkLoginScreenState extends State<DarkLoginScreen> {
                         _buildInputField(
                           controller: _emailController,
                           label: "Email",
-                          hint: "Enter your email 📧",
+                          hint: "Enter your email ",
                           icon: Icons.email_outlined,
                           validator: _validateEmail,
                           keyboardType: TextInputType.emailAddress,
@@ -393,7 +755,7 @@ class _DarkLoginScreenState extends State<DarkLoginScreen> {
                         _buildInputField(
                           controller: _passwordController,
                           label: "Password",
-                          hint: "Enter your password 🔐",
+                          hint: "Enter your password ",
                           icon: Icons.lock_outline,
                           isPassword: true,
                           isPasswordVisible: _isPasswordVisible,
@@ -478,7 +840,7 @@ class _DarkLoginScreenState extends State<DarkLoginScreen> {
                                     const Icon(Icons.rocket_launch, color: Colors.white, size: 20),
                                     const SizedBox(width: 8),
                                     Text(
-                                      "Launch Into Learning",
+                                      "Sign In",
                                       style: TextStyle(
                                         fontSize: screenWidth * 0.045,
                                         fontWeight: FontWeight.w600,
@@ -514,7 +876,7 @@ class _DarkLoginScreenState extends State<DarkLoginScreen> {
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(
-                                  "\"Code is poetry written in logic\" 💡",
+                                  "\"Code is poetry written in logic\" ",
                                   style: TextStyle(
                                     color: Colors.white.withOpacity(0.8),
                                     fontSize: 12,
@@ -552,12 +914,9 @@ class _DarkLoginScreenState extends State<DarkLoginScreen> {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            _buildStatItem("AI-Powered", "Assistant", Icons.auto_awesome),
-                            _buildStatItem("Instant", "Solutions", Icons.flash_on),
-                            _buildStatItem("100%", "Free", Icons.star),
-                            // _buildStatItem("10K+", "Students", Icons.people),
-                            // _buildStatItem("500+", "Courses", Icons.book),
-                            // _buildStatItem("95%", "Success", Icons.trending_up),
+                            _buildStatItem("10K+", "Students", Icons.people),
+                            _buildStatItem("500+", "Courses", Icons.book),
+                            _buildStatItem("95%", "Success", Icons.trending_up),
                           ],
                         ),
                       ],
@@ -584,14 +943,14 @@ class _DarkLoginScreenState extends State<DarkLoginScreen> {
                       },
                       child: Text.rich(
                         TextSpan(
-                          text: "New to our community? ",
+                          text: "New to our app? ",
                           style: TextStyle(
                             color: Colors.white70,
                             fontSize: screenWidth * 0.04,
                           ),
                           children: [
                             TextSpan(
-                              text: "Join the adventure! 🎉",
+                              text: " Create Account",
                               style: TextStyle(
                                 color: const Color(0xFF00D4AA),
                                 fontSize: screenWidth * 0.04,
