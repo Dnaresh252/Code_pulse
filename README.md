@@ -15,6 +15,13 @@ CodePulse provides:
 This README is short and focused so other students can run and extend the app quickly.
 
 ---
+## Screenshorts
+![WhatsApp Image 2025-06-20 at 15 22 13_1fa68be7](https://github.com/user-attachments/assets/4645fa10-b814-4a9c-b483-c496a1a06deb)
+![WhatsApp Image 2025-06-20 at 15 22 14_09620f63](https://github.com/user-attachments/assets/7e586141-6c02-4631-b9ee-d05056f7e5f8)
+![WhatsApp Image 2025-06-20 at 15 22 14_476b68b4](https://github.com/user-attachments/assets/4ef9108a-ce17-439e-8873-2cfbd1d61243)
+![WhatsApp Image 2025-08-01 at 14 03 01_9908ed1f](https://github.com/user-attachments/assets/86b55364-1218-4364-9f3d-f23a32c12be9)
+![WhatsApp Image 2025-08-01 at 14 02 59_fca11882](https://github.com/user-attachments/assets/d538de06-bbb7-4258-8251-249eeeb2bcb7)
+![WhatsApp Image 2025-08-01 at 14 03 00_5bf8c986](https://github.com/user-attachments/assets/edfedbef-6e94-4394-8d39-60a7e0940de5)
 
 ## Quick start
 
