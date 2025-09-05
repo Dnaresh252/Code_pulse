@@ -4,7 +4,7 @@ import '../models/quiz_question.dart';
 
 class AIService {
   // ⚠ Replace this with your actual Gemini API key
-  static const _apiKey = 'AIzaSyBkJwnyVi5JlpkMaJ_4dGulp5ZeOPVDmj4';
+  static const _apiKey = "Paste your Api key";
 
   static const _url =
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=$_apiKey';
