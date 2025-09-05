@@ -4,7 +4,7 @@ import 'package:http/http.dart' as http;
 import '../models/youtube_video.dart';
 
 class YoutubeService {
-  static const _apiKey = 'AIzaSyC3VBd9eJ9q6HmkiFyhtRIptiLvf3dra6k'; // Your API key
+  static const _apiKey = "Paste your api key"; // Your API key
 
   // ONLY inappropriate content keywords that students should not access
   static const List<String> _blockedKeywords = [
