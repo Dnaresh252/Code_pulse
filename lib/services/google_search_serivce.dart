@@ -3,7 +3,7 @@ import 'package:http/http.dart' as http;
 import '../models/google_search_result.dart';
 
 class GoogleSearchService {
-  static const _apiKey = 'AIzaSyByK2SI5e10K2xfkvDXjLFGCMaiz1DqtJ4';
+  static const _apiKey = "Paste your API key";
   static const _cseId = '92c5d6361bac64d85'; // Add your Custom Search Engine ID
 
   // ONLY inappropriate content keywords that students should not access
