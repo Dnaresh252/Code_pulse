@@ -1,145 +1,115 @@
-📱 CodePulse - Coding Learning Companion
+# CodePulse
 
-A beautiful Flutter app that helps developers track their coding journey and learn effectively.
+A simple Flutter app for coding puzzles and quick 1-vs-1 coding battles — a student project, clean and easy to run.
 
- ✨ What is CodePulse?
+---
 
-CodePulse is a mobile app designed for coding enthusiasts who want to:
-- Track their learning progress
-- Save important coding resources
-- Build better coding habits
-- Level up their programming skills
+## Overview
 
- 🚀 Features
+CodePulse provides:
 
- 🔐 User Management
-- Secure email signup/login
-- Email verification
-- Profile management with photo upload
-- Password recovery
+* Single-player puzzles with an in-app editor and test/check flow.
+* Realtime 1v1 rooms (works with a simple backend or Firestore).
+* Optional Firebase for authentication and persistent data.
 
- 📊 Progress Tracking
-- 5 Skill Levels**: Rookie → Beginner → Intermediate → Advanced → Expert
-- Points System**: Earn points for activities
-- Statistics**: Track notes, videos, quizzes, and resources
-- Learning Journey**: Visual progress display
+This README is short and focused so other students can run and extend the app quickly.
 
- 📚 Learning Tools
-- Save coding notes and tutorials
-- Bookmark educational videos
-- Store useful coding links
-- Take coding quizzes
+---
 
-🎨 Beautiful Design
-- Modern dark theme
-- Smooth animations
-- Mobile-friendly interface
-- Easy navigation
+## Quick start
 
- 
+1. Clone the repo
 
-🛠️ Built With
-
-- Flutter - Cross-platform mobile framework
-- Firebase - Backend and authentication
-- Firestore - Database
-- Dart - Programming language
-
-📦 Installation
-
- Requirements
-- Flutter 3.6.2+
-- Android Studio or VS Code
-- Firebase account
-
- Setup Steps
-
-1. Clone the project
 ```bash
-git clone https://github.com/yourusername/codepulse.git
-cd codepulse
+git clone https://github.com/Dnaresh252/Code_pulse.git
+cd Code_pulse
 ```
 
 2. Install dependencies
+
 ```bash
 flutter pub get
 ```
 
-3. Firebase Setup
-- Create a Firebase project
-- Add your `google-services.json` (Android)
-- Add your `GoogleService-Info.plist` (iOS)
+3. Run on device or emulator
 
-4. Run the app
 ```bash
 flutter run
 ```
 
-🏆 How It Works
+4. Build a release APK (Android)
 
- Level System
-- Rookie (0 pts) - Just getting started
-- Beginner (500+ pts) - Learning basics  
-- Intermediate (1,500+ pts) - Building skills
-- Advanced (3,000+ pts) - Strong foundation
-- Expert (5,000+ pts) - Coding master
-
- Earn Points By:
-- Saving coding notes
-- Bookmarking videos
-- Taking quizzes
-- Daily app usage
-
- 📁 Project Structure
-
+```bash
+flutter build apk --release
+# output: build/app/outputs/flutter-apk/app-release.apk
 ```
-lib/
-├── screens/           # App screens
-│   ├── login_screen.dart
-│   ├── signup_screen.dart
-│   ├── profile_screen.dart
-│   └── home_screen.dart
-├── main.dart         # App entry point
-└── assets/           # Images and icons
-```
-
-🔧 Key Dependencies
-
-```yaml
-dependencies:
-  flutter: ^3.6.2
-  firebase_core: ^3.13.1
-  firebase_auth: ^5.5.4
-  cloud_firestore: ^5.6.8
-  shared_preferences: ^2.5.3
-  image_picker: ^1.1.2
-```
-
- 🤝 Contributing
-
-1. Fork the project
-2. Create your feature branch (`git checkout -b feature/new-feature`)
-3. Commit changes (`git commit -m 'Add new feature'`)
-4. Push to branch (`git push origin feature/new-feature`)
-5. Open a Pull Request
-
-📝 License
-
-This project is licensed under the MIT License.
-
- 📞 Contact
-
-- Email: jsaivaishnavi15@gmail.com / dantinanaresh7432@gmail.com
-
-
- 🙏 Acknowledgments
-
-- Flutter team for the amazing framework
-- Firebase for backend services
-- All contributors and testers
 
 ---
 
-⭐ Star this repository if you found it helpful!
+## Project layout (important files)
 
-Made with ❤️ for the coding community
+```
+lib/         # app source (main.dart, screens, widgets, services)
+assets/      # icons, puzzles, images (add here)
+pubspec.yaml
+test/
+README.md
+```
+
+---
+
+## Puzzles (how to add)
+
+Puzzles can be local JSON files in `assets/puzzles/` or stored in Firestore.
+
+Example `assets/puzzles/p01_sum.json`:
+
+```json
+{
+  "id": "p01",
+  "title": "Sum Two Numbers",
+  "description": "Return the sum of two integers.",
+  "starter_code": "int solve(int a, int b) { return 0; }",
+  "tests": [
+    {"input": [1,2], "output": 3},
+    {"input": [5,7], "output": 12}
+  ],
+  "time_limit": 120
+}
+```
+
+If using local puzzles, add `assets/puzzles/` to `pubspec.yaml` under `flutter.assets:`.
+
+---
+
+## Firebase 
+
+To enable auth and Firestore:
+
+* Add `google-services.json` → `android/app/`
+* Add `GoogleService-Info.plist` → `ios/Runner/`
+* Enable Authentication providers and create collections like `puzzles`, `rooms`, `users`.
+
+Keep server keys and secrets out of the client.
+
+---
+
+## Contributing
+
+1. Fork → branch (`feature/your-feature`).
+2. Make focused changes and add tests if possible.
+3. Open a pull request with a short description.
+
+For big files (video/screenshots), prefer external hosting and link in the README.
+
+---
+
+## License (student terms)
+
+Use and modify for **personal, educational, or research** purposes. If you publish work that uses this repo, please credit the source. For commercial use, open an issue to discuss.
+
+---
+
+## Contact
+
+Open an issue on GitHub for bugs, suggestions, or to share a demo link. Include steps to reproduce and any logs/screenshots.
